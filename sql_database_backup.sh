@@ -3,6 +3,8 @@
 
 ### Source file for DB credentials with name .dbcreds
 ### We will use this file for fetching the credentials for Database Authentication
+### Objective of this script is to take backup of Mysql/MariaDB Database in linux using mysqldump
+
 :'
 db_host="localhost"
 db_user="backupuser"
@@ -26,7 +28,7 @@ then
     fi
 fi
 
-# Directory based on date of trigger
+# Directory based on date of trigger inside the backup_dir directory
 backup_date=$backup_dir/$(date +%Y-%m-%d)
 
 # Create the backup directory based on date if not existed
@@ -41,18 +43,21 @@ fi
 
 backup_filename=$backup_date".sql"
 
-# => For taking a specific database backup , Please add only below line
+# => For taking a specific database backup , Please add only below line for creating backup
 mysqldump -h "$db_host" -u "$db_user" -p "$db_pass" "$db_name" > "$backup_filename"
 
-# => For taking all databases as a backup in a single file , Please add only the below line
+# => For taking all databases as a backup in a single file: Method 1 , Please add only the below line for creating backup
 mysqldump -h "$db_host" -u "$db_user" -p "$db_pass" --all-databases > "$backup_filename"
 
-# => For taking a seperate backup for each database in a specific directory  , Please add below line
+# => For taking all databases as a backup in a single file : Method 2, Please add only the below line for creating backup
+mysqldump -h "$db_host" -u "$db_user" -p "$db_pass" --all-databases  --single-transaction --quick --lock-tables=false > "$backup_filename"
+
+# => For taking a seperate backup for each database in a specific directory  , Please add below steps for creating backup
 
 # Step 1: List all databases other than default databases
 databaseslist=$(mysql -h "$db_host" -u "$db_user" -p "$db_pass" -e "SHOW DATABASES;" | grep -Ev "Database|information_schema|performance_schema|mysql|sys")
 
-# Step 2: Taking backup of each directory
+# Step 2: Taking backup of each database
 for db in $databaseslist;
 do
     backup_filename="$backup_date/backup-${db}.sql"
