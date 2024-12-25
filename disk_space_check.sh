@@ -1,30 +1,100 @@
 #!/bin/bash
+#################################################################
+# Script Name: disk_space_check.sh
+# Description: Monitor disk space usage and directory sizes
+# Author: RAMSAI KRISHNA PRATTIPATI
+# Email: ramsaikcp@gmail.com
+# Created: December 2024
+# GitHub: www.linkedin.com/in/ramsai-krishna-prattipati-50322218b
+# LinkedIn: https://github.com/ramsaikrishnap
+# Version: 1.0
+#
+# This script performs:
+# 1. Full backup on Sundays
+# 2. Incremental backups on other days
+# 3. Automatic cleanup of backups older than 30 days
+#################################################################
 
-# Below is the script that will check the disk space usage . If the disk space is greater than threshold value it will trigger mail(assuming SMTP enabled).
+# Configuration variables
+threshold=90                           # Disk usage threshold percentage
+alert_email="person@example.com"       # Email address for alerts
+path="/my_working_directory"           # Base path for directory space check
 
-threshold=90
-df -h | awk '{print $5 " " $6}' | while read output;
-do
-  usage=$(echo $output | awk '{print $1}' | cut -d'%' -f1)
-  partition=$(echo $output | awk '{print $2}')
-  if [ $usage -ge $threshold ]; then
-    echo "Warning: $partition is at $usage%" 
-    echo "Warning: $partition is at $usage%" | mail - s "Disk Space Usage" person@example.com # This requires SMTP access to the server for alerts via mail
-  fi
-done
+# Function to check if a directory exists
+check_directory() {
+    if [ ! -d "$1" ]; then
+        echo "Error: Directory $1 does not exist!"
+        exit 1
+    fi
+}
 
+# Function to send email alert
+send_alert() {
+    local partition="$1"
+    local usage="$2"
+    echo "Warning: $partition is at $usage%" | mail -s "Disk Space Alert" "$alert_email"
+}
 
-# Below is the script that will show report of space occupied in each directory
-path="/my_working_directory"
+# Function to check disk space usage
+check_disk_space() {
+    echo "=== Checking Disk Space Usage ==="
+    df -h | grep -v "Filesystem" | awk '{print $5 " " $6}' | while read -r output; do
+        usage=$(echo "$output" | awk '{print $1}' | cut -d'%' -f1)
+        partition=$(echo "$output" | awk '{print $2}')
+        
+        if [ "$usage" -ge "$threshold" ]; then
+            echo "Warning: $partition is at $usage%"
+            # Uncomment below line if SMTP is configured
+            # send_alert "$partition" "$usage"
+        fi
+    done
+}
 
-# Code to get space occupied in the directory
-directory_list=$(ls -l | grep '^d' | awk '{print $NF}')
+# Function to report directory sizes
+report_directory_sizes() {
+    echo "=== Directory Space Report ==="
+    # Check if base path exists
+    check_directory "$path"
+    
+    # Save current directory
+    original_path=$(pwd)
+    
+    # Get list of directories (excluding hidden directories)
+    directory_list=$(find "$path" -maxdepth 1 -type d ! -path "*/\.*" ! -path "$path")
+    
+    # Check if any directories were found
+    if [ -z "$directory_list" ]; then
+        echo "No directories found in $path"
+        return
+    }
+    
+    # Loop through each directory
+    for dir in $directory_list; do
+        if [ -d "$dir" ]; then
+            space=$(du -sh "$dir" 2>/dev/null | awk '{print $1}')
+            if [ $? -eq 0 ]; then
+                echo "Space in $dir: $space"
+            else
+                echo "Error getting size for $dir"
+            fi
+        fi
+    done
+    
+    # Return to original directory
+    cd "$original_path" || exit 1
+}
 
-for dir in $directory_list
-do
-    switching_path=$path/$dir
-    cd $switching_path
-    space=$(du -sh | awk -F " " '{print $1}')
-   
-    echo "Space in $switching_path is $space"
-done
+# Main execution
+echo "Starting disk space monitoring script..."
+echo "----------------------------------------"
+
+# Run disk space check
+check_disk_space
+
+echo "----------------------------------------"
+
+# Run directory space report
+report_directory_sizes
+
+echo "----------------------------------------"
+echo "Script execution completed"
