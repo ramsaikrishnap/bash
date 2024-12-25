@@ -33,9 +33,9 @@ source .dbcreds     # NOTE: Potential syntax issue - should check if file exists
 backup_dir="/path/to/backup_directory_path"
 
 # Create main backup directory if it doesn't exist
-if [ ! -d "$backup_dir" ];  then     # NOTE: Extra space after semicolon isn't needed
-    mkdir -p $backup_dir             # NOTE: $backup_dir should be quoted: "$backup_dir"
-    if [ $? -ne 0 ];     then        # NOTE: Extra space after semicolon
+if [ ! -d "$backup_dir" ];  then     
+    mkdir -p $backup_dir             
+    if [ $? -ne 0 ];     then        
         echo "Failed to create the backup directory : $backup_dir"
     fi
 fi
@@ -44,15 +44,15 @@ fi
 backup_date=$backup_dir/$(date +%Y-%m-%d)
 
 # Create date-specific directory if it doesn't exist
-if [ ! -d "$backup_date" ];  then    # NOTE: Extra space after semicolon
-    mkdir -p $backup_date            # NOTE: $backup_date should be quoted
+if [ ! -d "$backup_date" ];  then    
+    mkdir -p $backup_date            
     if [ $? -ne 0 ];     then
         echo "Failed to create the backup directory : $backup_date"
     fi
 fi
 
 # Define backup filename
-backup_filename=$backup_date".sql"    # NOTE: Consider quoting the variable
+backup_filename=$backup_date".sql"    
 
 ### Backup Methods ###
 # Method 1: Single Database Backup
@@ -72,7 +72,7 @@ mysqldump -h "$db_host" -u "$db_user" -p "$db_pass" --all-databases  --single-tr
 databaseslist=$(mysql -h "$db_host" -u "$db_user" -p "$db_pass" -e "SHOW DATABASES;" | grep -Ev "Database|information_schema|performance_schema|mysql|sys")
 
 # Step 2: Create individual backups for each database
-for db in $databaseslist; do         # NOTE: $databaseslist should be quoted
+for db in $databaseslist; do         
     backup_filename="$backup_date/backup-${db}.sql"
     mysqldump -h "$db_host" -u "$db_user" -p "$db_pass" "$db" > "$backup_filename"
     if [ $? -ne 0 ]     then
@@ -83,6 +83,6 @@ for db in $databaseslist; do         # NOTE: $databaseslist should be quoted
 done
 
 # Step 3: Clean up old backups (45 days retention)
-find $backup_date -type d -mtime +45 -delete    # NOTE: $backup_date should be quoted
+find $backup_date -type d -mtime +45 -delete    
 
 ### Note: Only uncomment/use one backup method at a time ###

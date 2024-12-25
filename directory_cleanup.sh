@@ -1,7 +1,7 @@
 #!/bin/bash
 #################################################################
 # Script Name: directory_cleanup.sh
-# Description: Script for deleting directories based on retention period
+# Description: Script for directories cleanup based on retention period
 # Author: RAMSAI KRISHNA PRATTIPATI
 # Email: ramsaikcp@gmail.com
 # GitHub: www.linkedin.com/in/ramsai-krishna-prattipati-50322218b
